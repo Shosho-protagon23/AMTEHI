@@ -1,0 +1,138 @@
+// AMTEHI — Prisma schema
+// Catatan: Supabase Auth mengelola tabel auth.users. Tabel `profiles` di sini
+// merujuk ke auth.users(id). RLS tetap dikelola di sisi Supabase (lihat sql/).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  student
+  staff
+  admin
+}
+
+enum ItemStatus {
+  open
+  claimed
+  closed
+}
+
+enum ItemType {
+  lost
+  found
+}
+
+enum ClaimStatus {
+  pending
+  approved
+  rejected
+}
+
+model Profile {
+  id        String   @id @db.Uuid
+  fullName  String   @map("full_name")
+  nim       String?  @unique
+  faculty   String?
+  phone     String?
+  avatarUrl String?  @map("avatar_url")
+  role      UserRole @default(student)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  lostItems      LostItem[]
+  foundItems     FoundItem[]
+  claims         ClaimRequest[] @relation("ClaimantClaims")
+  reviewedClaims ClaimRequest[] @relation("ReviewerClaims")
+  adminLogs      AdminLog[]
+
+  @@map("profiles")
+}
+
+model LostItem {
+  id          String     @id @default(uuid()) @db.Uuid
+  userId      String     @map("user_id") @db.Uuid
+  title       String
+  description String?
+  category    String
+  lastSeenAt  DateTime?  @map("last_seen_at") @db.Timestamptz
+  lastSeenLoc String?    @map("last_seen_loc")
+  photoUrl    String?    @map("photo_url")
+  status      ItemStatus @default(open)
+  createdAt   DateTime   @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime   @updatedAt @map("updated_at") @db.Timestamptz
+
+  owner Profile @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([category])
+  @@index([createdAt])
+  @@map("lost_items")
+}
+
+model FoundItem {
+  id          String     @id @default(uuid()) @db.Uuid
+  userId      String     @map("user_id") @db.Uuid
+  title       String
+  description String?
+  category    String
+  foundAt     DateTime?  @map("found_at") @db.Timestamptz
+  foundLoc    String?    @map("found_loc")
+  storageLoc  String?    @map("storage_loc")
+  photoUrl    String?    @map("photo_url")
+  status      ItemStatus @default(open)
+  createdAt   DateTime   @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime   @updatedAt @map("updated_at") @db.Timestamptz
+
+  owner Profile @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([category])
+  @@index([createdAt])
+  @@map("found_items")
+}
+
+model ClaimRequest {
+  id            String      @id @default(uuid()) @db.Uuid
+  claimantId    String      @map("claimant_id") @db.Uuid
+  itemId        String      @map("item_id") @db.Uuid
+  itemType      ItemType    @map("item_type")
+  proofText     String?     @map("proof_text")
+  proofPhotoUrl String?     @map("proof_photo_url")
+  status        ClaimStatus @default(pending)
+  adminNote     String?     @map("admin_note")
+  reviewedBy    String?     @map("reviewed_by") @db.Uuid
+  reviewedAt    DateTime?   @map("reviewed_at") @db.Timestamptz
+  createdAt     DateTime    @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime    @updatedAt @map("updated_at") @db.Timestamptz
+
+  claimant Profile  @relation("ClaimantClaims", fields: [claimantId], references: [id], onDelete: Cascade)
+  reviewer Profile? @relation("ReviewerClaims", fields: [reviewedBy], references: [id], onDelete: SetNull)
+
+  @@index([status])
+  @@index([itemId])
+  @@map("claim_requests")
+}
+
+// Audit trail aksi admin (review klaim, hapus barang, ubah role).
+model AdminLog {
+  id         String   @id @default(uuid()) @db.Uuid
+  adminId    String   @map("admin_id") @db.Uuid
+  action     String
+  targetType String?  @map("target_type")
+  targetId   String?  @map("target_id") @db.Uuid
+  detail     String?
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  admin Profile @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@index([adminId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("admin_logs")
+}
