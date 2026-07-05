@@ -47,3 +47,6 @@ CLAUDE.md
 buat-zip.ps1
 *.zip
 planB.txt
+# Transkrip sesi & log deploy — jangan ke-commit
+05072026.txt
+hasilLogVercel.txt
