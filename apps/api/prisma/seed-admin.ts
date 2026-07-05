@@ -66,7 +66,15 @@ async function main() {
 
   if (existing) {
     userId = existing.id;
-    console.log(`ℹ️  User sudah ada di Auth (${ADMIN_EMAIL}) — akan di-promote.`);
+    console.log(`ℹ️  User sudah ada di Auth (${ADMIN_EMAIL}) — promote & set ulang password.`);
+    // Set ulang password agar seed juga berfungsi sebagai reset kredensial.
+    const { error: updErr } = await supabaseAdmin.auth.admin.updateUserById(userId, {
+      password: ADMIN_PASSWORD,
+    });
+    if (updErr) {
+      throw new Error(`Gagal memperbarui password admin: ${updErr.message}`);
+    }
+    console.log('✅ Password admin diperbarui.');
   } else {
     const { data, error } = await supabaseAdmin.auth.admin.createUser({
       email: ADMIN_EMAIL,
