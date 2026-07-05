@@ -193,7 +193,7 @@ Akun admin demo sudah disiapkan untuk keperluan pengujian:
 | Field | Nilai |
 |---|---|
 | **Email** | `admin@amikom.ac.id` |
-| **Password** | `AdminAmtehi123!` |
+| **Password** | `REDACTED` |
 
 Langkah masuk:
 

@@ -9,17 +9,26 @@
  *   npm run seed:admin
  *
  * Kredensial bisa di-override lewat env (opsional):
- *   ADMIN_EMAIL=admin@amikom.ac.id ADMIN_PASSWORD=RahasiaKuat123 npm run seed:admin
+ *   ADMIN_EMAIL=admin@amikom.ac.id ADMIN_PASSWORD=REDACTED npm run seed:admin
  *
  * ⚠️ Memakai SUPABASE_SERVICE_ROLE_KEY — hanya untuk backend/lokal.
  */
 import { supabaseAdmin } from '../src/lib/supabase.js';
 import { prisma } from '../src/lib/prisma.js';
 
-// Default demo — sebaiknya ganti password setelah login pertama.
+// Kredensial admin diambil dari env — TIDAK ada password default di kode
+// (mencegah kebocoran ke repo). ADMIN_PASSWORD wajib di-set saat menjalankan.
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? 'admin@amikom.ac.id';
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? 'AdminAmtehi123!';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 const ADMIN_NAME = process.env.ADMIN_NAME ?? 'Admin AMTEHI';
+
+if (!ADMIN_PASSWORD) {
+  console.error(
+    'ADMIN_PASSWORD wajib di-set. Contoh:\n' +
+      '  ADMIN_EMAIL=admin@amikom.ac.id ADMIN_PASSWORD=<password-kuat> npm run seed:admin',
+  );
+  process.exit(1);
+}
 
 /**
  * Cari user auth berdasarkan email dengan menelusuri halaman daftar user.

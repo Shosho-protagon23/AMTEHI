@@ -201,11 +201,11 @@ npm run seed:admin --workspace=@amtehi/api
 # atau dari apps/api: npm run seed:admin
 ```
 
-Membuat akun admin default `admin@amikom.ac.id` / `AdminAmtehi123!`. Aman
+Membuat akun admin default `admin@amikom.ac.id` / `REDACTED`. Aman
 dijalankan berulang (jika sudah ada, hanya di-promote). Override kredensial:
 
 ```bash
-ADMIN_EMAIL=admin@amikom.ac.id ADMIN_PASSWORD=RahasiaKuat123 npm run seed:admin
+ADMIN_EMAIL=admin@amikom.ac.id ADMIN_PASSWORD=REDACTED npm run seed:admin
 ```
 
 **Cara B — Promote akun yang sudah ada via SQL Editor Supabase:**

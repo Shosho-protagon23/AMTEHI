@@ -608,7 +608,7 @@ npm run dev
 | Field | Nilai |
 |---|---|
 | Email | `admin@amikom.ac.id` |
-| Password | `AdminAmtehi123!` |
+| Password | `REDACTED` |
 
 ### Environment Variables Utama
 **`apps/api/.env`:** `NODE_ENV`, `PORT`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`,
