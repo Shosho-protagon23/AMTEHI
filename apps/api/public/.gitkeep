@@ -1,0 +1,4 @@
+# Folder output statis kosong.
+# Vercel mengharuskan outputDirectory ("public") ada setelah buildCommand custom.
+# Proyek ini serverless-only (fungsi di api/index.ts) — tidak ada aset statis,
+# jadi folder ini sengaja dibiarkan kosong. Jangan hapus.
