@@ -654,8 +654,15 @@ memverifikasi hasil sesuai harapan.
 | BUG-001 | Upload foto error 404 (endpoint hook salah `/upload` → `/upload/item-photo`) | ✅ Fixed |
 | BUG-002 | UI polos tanpa CSS (proses Node zombie + cache `.next` korup) | ✅ Fixed |
 | BUG-003 | `prisma generate` gagal `EPERM` saat dev server jalan (Windows file lock) | ✅ Resolved |
+| BUG-004 | Build API Vercel gagal `TS2688` — `NODE_ENV=production` membuang `@types/node` (fix: `npm install --include=dev`) | ✅ Fixed |
+| BUG-005 | Deploy API gagal `No Output Directory "public"` — serverless-only butuh folder `public/` kosong | ✅ Fixed |
+| BUG-006 | `ERR_ERL_UNEXPECTED_X_FORWARDED_FOR` di Vercel (fix: `app.set('trust proxy', 1)`) | ✅ Fixed |
+| BUG-007 | Data barang gagal muat — Turbo tak teruskan `API_URL` ke build → `rewrites()` mati (fix: `turbo.json` `env`) | ✅ Fixed |
 
 *Detail lengkap tiap bug tersedia di `README.md` bagian Bug Log.*
+
+> Catatan keamanan (2026-07-05): kredensial admin demo yang sempat bocor telah
+> diredaksi & password produksi dirotasi. Lihat `README.md` → CATATAN-KEAMANAN.
 
 ---
 

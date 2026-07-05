@@ -287,3 +287,63 @@ Catatan bug yang ditemukan & status penanganannya. Format ID: `BUG-NNN`.
 | **Solusi** | Hentikan proses dev server (turbo `dev` → `tsx watch` API, Next.js, `tsc --watch`) lebih dulu, lalu jalankan `npx prisma generate`, kemudian `npm run dev` lagi. |
 | **Verifikasi** | Setelah dev server dihentikan: `prisma generate` sukses (`Generated Prisma Client v6.19.3`), `migrate deploy` menerapkan `20260703090000_add_admin_logs`, dan `tsc --noEmit` di `apps/api` & `apps/web` lolos (exit 0). |
 | **Pencegahan** | Selalu **stop dev server sebelum** mengubah `schema.prisma` + `prisma generate`. Alur aman untuk perubahan skema: stop dev → edit schema → `prisma migrate dev` (yang otomatis generate) → `npm run dev`. |
+
+### BUG-004 — Build API Vercel gagal `TS2688: Cannot find type definition file for 'node'`
+
+| Atribut | Detail |
+|---|---|
+| **Tanggal ditemukan** | 2026-07-05 |
+| **Status** | ✅ Fixed (2026-07-05) |
+| **Severity** | High — deploy API gagal total di tahap `tsc` build |
+| **Letak** | `apps/api/vercel.json` (`installCommand`) |
+| **Masalah** | `NODE_ENV=production` (wajib di API untuk flag cookie `Secure`) juga aktif saat `npm install` di build, sehingga npm **membuang semua devDependencies** — termasuk `@types/node`. `tsconfig.json` api punya `"types": ["node"]`, jadi `tsc` gagal karena type `node` tak ada. Build lokal (Windows) lolos karena devDeps ada, menyamarkan masalah. |
+| **Solusi** | Ubah `installCommand` menjadi `npm install --include=dev` agar devDeps tetap terpasang meski `NODE_ENV=production`. |
+| **Verifikasi** | Dry-run `NODE_ENV=production npm install --include=dev` tidak lagi membuang `@types/node`; deploy Vercel berikutnya lolos tahap build api. |
+| **Catatan** | Web (`apps/web`) rawan masalah serupa — **jangan** set `NODE_ENV=production` manual di proyek Web; Next.js sudah mengaturnya, dan set manual akan memangkas `@types/react`/`typescript`. |
+
+### BUG-005 — Deploy API gagal `No Output Directory named "public" found`
+
+| Atribut | Detail |
+|---|---|
+| **Tanggal ditemukan** | 2026-07-05 |
+| **Status** | ✅ Fixed (2026-07-05) |
+| **Severity** | High — deploy API gagal setelah build sukses |
+| **Letak** | `apps/api/` (struktur output) |
+| **Masalah** | `vercel.json` dengan `buildCommand` custom + `framework: null` membuat Vercel memperlakukan proyek sebagai *static build* dan mencari `outputDirectory` bernama `public` setelah build. Proyek API ini serverless-only (fungsi di `api/index.ts`, tanpa aset statis), jadi folder itu tak ada. |
+| **Solusi** | Sediakan folder `apps/api/public/` kosong (via `.gitkeep`) agar cek output Vercel terpenuhi; fungsi di `api/` tetap ter-deploy normal. |
+| **Verifikasi** | Deploy berikutnya lolos tahap output; fungsi serverless hidup & menerima request. |
+
+### BUG-006 — `ERR_ERL_UNEXPECTED_X_FORWARDED_FOR` (express-rate-limit) di Vercel
+
+| Atribut | Detail |
+|---|---|
+| **Tanggal ditemukan** | 2026-07-05 |
+| **Status** | ✅ Fixed (2026-07-05) |
+| **Severity** | Medium — error runtime di setiap request; rate-limit tak bisa identifikasi IP |
+| **Letak** | `apps/api/src/app.ts` |
+| **Masalah** | Vercel meneruskan request lewat proxy, sehingga header `X-Forwarded-For` selalu ada. Express default `trust proxy = false`, membuat `express-rate-limit` melempar `ValidationError` karena tak bisa menebak IP klien dengan akurat. |
+| **Solusi** | `app.set('trust proxy', 1)` — percaya satu hop proxy Vercel. Nilai `1` lebih aman daripada `true` yang mempercayai seluruh rantai proxy (juga memicu peringatan library). |
+| **Verifikasi** | `/api/health` via API langsung balas `200` JSON; error validation hilang dari Logs. |
+
+### BUG-007 — Halaman barang "gagal memuat data" — proxy `/api` kena 404 di produksi
+
+| Atribut | Detail |
+|---|---|
+| **Tanggal ditemukan** | 2026-07-05 |
+| **Status** | ✅ Fixed (2026-07-05) |
+| **Severity** | High — semua data (lost/found) gagal tampil di web produksi |
+| **Letak** | `turbo.json` (task `build` → `env`) |
+| **Masalah** | `rewrites()` di `next.config.mjs` mem-proxy `/api/*` ke backend hanya bila `process.env.API_URL` ada, dan dievaluasi **saat build**. `API_URL` sudah di-set di dashboard Vercel, tetapi **Turborepo memfilter env var** — hanya yang dideklarasikan di `turbo.json` yang diteruskan ke proses build. `API_URL` tak terdaftar → `undefined` saat `next build` → `rewrites()` kosong → `/api/*` jatuh ke 404 Next.js (`X-Matched-Path: /404`). Log build memberi peringatan eksplisit: *"variables set on your Vercel project, but missing from turbo.json"*. |
+| **Solusi** | Tambahkan `"env": ["API_URL","NEXT_PUBLIC_API_URL","NEXT_PUBLIC_SUPABASE_URL","NEXT_PUBLIC_SUPABASE_ANON_KEY"]` pada task `build` di `turbo.json`. |
+| **Verifikasi** | Setelah redeploy, `/api/health` via **domain web** balas `200` JSON (bukan HTML), halaman barang memuat data normal. |
+| **Catatan** | `rewrites()` di-*bake* saat build — bila mengubah `API_URL` di dashboard, **redeploy** web (idealnya tanpa build cache) agar nilai baru ter-*bake*. |
+
+### CATATAN-KEAMANAN — Rotasi kredensial admin yang bocor
+
+| Atribut | Detail |
+|---|---|
+| **Tanggal** | 2026-07-05 |
+| **Status** | ✅ Ditangani (2026-07-05) |
+| **Masalah** | Password admin demo terekspos di MDs (`README`, `DETAILS`, `MANUAL`) dan di-hardcode sebagai fallback di `seed-admin.ts`. Karena repo publik, password lama harus dianggap bocor (jejak tetap ada di riwayat Git). |
+| **Solusi** | (1) Redaksi semua referensi password → `REDACTED`; (2) `seed-admin.ts` kini mewajibkan `ADMIN_PASSWORD` via env (tanpa default) **dan** melakukan `updateUserById` untuk set ulang password user existing; (3) password admin **produksi dirotasi** ke nilai acak kuat lewat `seed:admin`. |
+| **Pencegahan** | Jangan pernah menaruh password asli di kode/dokumen yang masuk Git. Kredensial demo selalu lewat env var. |

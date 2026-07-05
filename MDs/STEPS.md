@@ -327,6 +327,11 @@ Uji lewat **domain web** (bukan domain API), karena itu alur user asli:
 | `prisma migrate` error prepared statement | Migrasi lewat pooler 6543 | Jalankan migrasi lewat `DIRECT_URL` (port **5432**) |
 | Login sukses tapi langsung logout / sesi hilang | Cookie tak dapat `Secure` | Set `NODE_ENV=production` di proyek API, redeploy |
 | `/api/*` dari web kena 404/CORS | `API_URL` belum di-set / salah di proyek web | Isi `API_URL` = URL API, redeploy web |
+| Build API gagal: `TS2688 Cannot find type definition file for 'node'` | `NODE_ENV=production` membuat `npm install` membuang devDeps (`@types/node`) | `installCommand` = `npm install --include=dev` di `apps/api/vercel.json` (BUG-004) |
+| Deploy API gagal: `No Output Directory named "public" found` | `buildCommand` custom → Vercel cari output statis; proyek serverless-only | Sediakan folder `apps/api/public/` kosong (`.gitkeep`) (BUG-005) |
+| Runtime API: `ERR_ERL_UNEXPECTED_X_FORWARDED_FOR` | Express `trust proxy=false` di balik proxy Vercel | `app.set('trust proxy', 1)` di `apps/api/src/app.ts` (BUG-006) |
+| Web: data barang "gagal memuat"; `/api/*` via web balas HTML 404 (`X-Matched-Path: /404`) | Turborepo memfilter env; `API_URL` tak diteruskan ke `next build` → `rewrites()` kosong | Tambah `env: ["API_URL", ...]` pada task `build` di `turbo.json`, lalu redeploy tanpa cache (BUG-007) |
+| Link web/API minta login Vercel (redirect ke `vercel.com/sso-api`) | **Deployment Protection** (Vercel Authentication) aktif | Proyek → Settings → **Deployment Protection** → matikan *Vercel Authentication* (set Disabled) di **kedua** proyek. Wajib agar link bisa diakses publik/penguji |
 | Upload foto > ~4.5MB gagal (413) | Batas body Vercel | Set `MAX_FILE_SIZE_MB=4`; atau (lanjutan) upload langsung browser→Supabase Storage |
 | Build API gagal: `@amtehi/shared` tak ketemu | `npm install` jalan di `apps/api`, bukan root | Aktifkan "Include files outside Root Directory"; pastikan monorepo terdeteksi |
 | `EPERM rename query_engine-windows.dll.node` (LOKAL) | Dev server memegang DLL (Windows) | Stop dev server (Ctrl+C) → `npx prisma generate` → `npm run dev`. Tidak terjadi di Vercel (Linux) |
@@ -348,8 +353,14 @@ Uji lewat **domain web** (bukan domain API), karena itu alur user asli:
 | `MAX_FILE_SIZE_MB` | `5` | `4` | — | Batas body Vercel ~4.5MB |
 | `NEXT_PUBLIC_SUPABASE_URL` | — | — | ✅ | |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | — | — | ✅ | |
-| `NEXT_PUBLIC_API_URL` | `http://localhost:3001/api` | — | *(kosong)* | Kosong di prod → axios pakai `/api` relatif |
-| `API_URL` | *(tak perlu)* | — | URL API | Server-side, untuk `rewrites()` |
+| `NEXT_PUBLIC_API_URL` | `http://localhost:3001/api` | — | *(kosong)* / `/api` | Kosong → axios pakai `/api` relatif. Bila Vercel mewajibkan diisi, set `/api` (hasil identik). **Jangan** isi URL absolut API (memecah cookie `SameSite=Strict`) |
+| `API_URL` | *(tak perlu)* | — | URL API | Server-side, untuk `rewrites()`. **Tanpa** `/api` di akhir |
+
+> ⚠️ **Turborepo & env var:** proyek ini monorepo Turbo. Env var yang dipakai saat
+> `build` (mis. `API_URL`, `NEXT_PUBLIC_*`) **wajib** didaftarkan di `turbo.json`
+> (`tasks.build.env`), jika tidak Turbo tak meneruskannya ke `next build` dan
+> `rewrites()` gagal (lihat BUG-007 di `README.md`). Setelah mengubah `API_URL` di
+> dashboard, **redeploy web tanpa build cache** agar nilainya ter-*bake*.
 
 ---
 
