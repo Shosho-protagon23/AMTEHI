@@ -8,6 +8,17 @@ const nextConfig = {
   reactStrictMode: true,
   // @amtehi/shared diimpor sebagai source TS, perlu di-transpile
   transpilePackages: ['@amtehi/shared'],
+  // Proxy /api/* ke deployment backend di sisi server (same-origin bagi browser),
+  // sehingga cookie tetap first-party & SameSite=Strict tanpa CORS lintas-domain.
+  // Aktif hanya bila API_URL di-set (produksi Vercel); di dev lokal axios memakai
+  // NEXT_PUBLIC_API_URL absolut sehingga rewrite ini tidak diperlukan.
+  async rewrites() {
+    const apiUrl = process.env.API_URL;
+    if (!apiUrl) return [];
+    return [
+      { source: '/api/:path*', destination: `${apiUrl}/api/:path*` },
+    ];
+  },
   // Akar monorepo eksplisit agar Next tidak salah pilih lockfile di home dir
   outputFileTracingRoot: join(__dirname, '../../'),
   images: {

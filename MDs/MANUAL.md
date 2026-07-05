@@ -61,10 +61,15 @@ Terdapat tiga peran di dalam sistem:
 
 ## 3. Memulai — Akses Aplikasi
 
-- **Alamat aplikasi (frontend):** `http://localhost:3000`
-- **Alamat API (backend):** `http://localhost:3001`
+- **Versi online (produksi):** buka alamat domain aplikasi, mis.
+  `https://amtehi.vercel.app` (satu alamat untuk semua — API berjalan di baliknya).
+- **Versi lokal (pengembangan/testing):**
+  - Alamat aplikasi (frontend): `http://localhost:3000`
+  - Alamat API (backend): `http://localhost:3001`
 
-Buka alamat frontend melalui browser (Chrome/Edge/Firefox). Halaman beranda menampilkan pengantar singkat serta tombol **Masuk** dan **Daftar** di kanan atas.
+> Panduan menjalankan lokal & mem-*hosting* ke produksi ada di **`STEPS.md`**.
+
+Buka alamat aplikasi melalui browser (Chrome/Edge/Firefox). Halaman beranda menampilkan pengantar singkat serta tombol **Masuk** dan **Daftar** di kanan atas.
 
 **Bilah navigasi (navbar)** selalu tersedia di bagian atas:
 

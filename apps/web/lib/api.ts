@@ -6,7 +6,9 @@ import type { ApiError } from '@amtehi/shared';
  * `withCredentials: true` agar httpOnly cookie (JWT) ikut terkirim otomatis.
  */
 export const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api',
+  // Produksi: kosongkan NEXT_PUBLIC_API_URL → pakai '/api' relatif (same-origin,
+  // di-proxy Next rewrites). Dev lokal: set ke http://localhost:3001/api.
+  baseURL: process.env.NEXT_PUBLIC_API_URL ?? '/api',
   withCredentials: true,
   headers: { 'Content-Type': 'application/json' },
 });

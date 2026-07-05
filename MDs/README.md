@@ -112,7 +112,10 @@ Base URL: `http://localhost:3001/api`
    - `apps/api/.env` (isi blok `apps/api/.env`)
    - `apps/web/.env.local` (isi blok `apps/web/.env.local`)
 
-   Koneksi Supabase menggunakan **Session Pooler** (bukan direct connection).
+   Koneksi Supabase menggunakan **pooler** (bukan direct connection). Untuk dev
+   lokal, `DATABASE_URL` dan `DIRECT_URL` sama-sama **Session Pooler port 5432**.
+   Untuk produksi serverless, `DATABASE_URL` pakai **Transaction Pooler port 6543** —
+   lihat [`STEPS.md`](STEPS.md).
 
 4. **Generate Prisma client & jalankan migrasi**:
    ```bash
@@ -145,6 +148,13 @@ npm run dev:web    # http://localhost:3000
 ```bash
 npm run build
 ```
+
+## Deploy
+
+Backend Express dijalankan sebagai **serverless function** dan di-*hosting* ke
+**Vercel** (dua proyek — web + api — tampil di satu domain lewat Next.js rewrites).
+Panduan langkah demi langkah (localhost testing **dan** Vercel hosting) ada di
+**[`STEPS.md`](STEPS.md)**.
 
 ---
 

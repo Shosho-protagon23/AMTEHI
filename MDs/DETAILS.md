@@ -581,7 +581,9 @@ npm run build --workspace=@amtehi/shared
 
 # 3. Konfigurasi environment
 #    Salin .env.example → apps/api/.env dan apps/web/.env.local
-#    (Koneksi Supabase memakai Session Pooler, bukan direct connection)
+#    (Koneksi Supabase memakai pooler, bukan direct connection.
+#     Dev lokal: DATABASE_URL & DIRECT_URL sama-sama Session Pooler :5432.
+#     Produksi serverless: DATABASE_URL Transaction Pooler :6543 — lihat STEPS.md)
 
 # 4. Generate Prisma client & migrasi
 npm run prisma:generate
@@ -599,6 +601,9 @@ npm run dev
 - Frontend: **http://localhost:3000**
 - Backend API: **http://localhost:3001**
 
+> **Deploy produksi (Vercel):** backend dijalankan sebagai *serverless function*;
+> web + api tampil di satu domain via Next.js rewrites. Langkah lengkap di **`STEPS.md`**.
+
 ### Akun Admin Demo
 | Field | Nilai |
 |---|---|
@@ -607,10 +612,11 @@ npm run dev
 
 ### Environment Variables Utama
 **`apps/api/.env`:** `NODE_ENV`, `PORT`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`,
-`SUPABASE_SERVICE_ROLE_KEY` (rahasia, backend saja), `DATABASE_URL`,
-`FRONTEND_URL`, `MAX_FILE_SIZE_MB`.
+`SUPABASE_SERVICE_ROLE_KEY` (rahasia, backend saja), `DATABASE_URL` (runtime),
+`DIRECT_URL` (khusus `prisma migrate`), `FRONTEND_URL`, `MAX_FILE_SIZE_MB`.
 **`apps/web/.env.local`:** `NEXT_PUBLIC_SUPABASE_URL`,
-`NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_API_URL`.
+`NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_API_URL` (dev; kosong di prod).
+Di produksi Vercel, proyek web juga memakai `API_URL` (server-side) untuk rewrites.
 
 ---
 
@@ -672,8 +678,9 @@ memverifikasi hasil sesuai harapan.
 ### Batasan Saat Ini
 - Belum ada fitur **reset password** mandiri (harus lewat pengelola).
 - Notifikasi masih terbatas (belum realtime/email penuh).
-- Deployment masih lokal (`localhost`), belum online publik.
 - Role admin hanya via seed/DB (disengaja demi keamanan).
+- Upload dibatasi ~4MB di produksi Vercel (batas body serverless); rencana lanjutan:
+  upload langsung browser→Supabase Storage.
 
 ### Rencana Pengembangan Lanjutan
 1. **Notifikasi realtime & email** saat klaim disetujui/ditolak
@@ -682,8 +689,7 @@ memverifikasi hasil sesuai harapan.
 3. **Integrasi login email kampus** resmi (`@students.amikom.ac.id`).
 4. **Aplikasi mobile** (React Native / PWA).
 5. **Fitur chat langsung** antara penemu & pemilik.
-6. **Deployment produksi** (Vercel untuk web + Railway/Render untuk API).
-7. **Full-text search** lebih canggih (tsvector PostgreSQL).
+6. **Full-text search** lebih canggih (tsvector PostgreSQL).
 
 ---
 

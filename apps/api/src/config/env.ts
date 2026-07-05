@@ -26,7 +26,9 @@ const parsed = envSchema.safeParse(process.env);
 if (!parsed.success) {
   console.error('❌ Konfigurasi environment tidak valid:');
   console.error(parsed.error.flatten().fieldErrors);
-  process.exit(1);
+  // Di serverless (Vercel), `process.exit` membunuh function secara opaque.
+  // `throw` memunculkan error konfigurasi sebagai 500 yang terbaca di log.
+  throw new Error('Konfigurasi environment tidak valid');
 }
 
 export const env = parsed.data;

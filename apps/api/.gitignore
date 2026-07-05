@@ -1,3 +1,5 @@
 .env
 dist/
 server.log
+
+.vercel

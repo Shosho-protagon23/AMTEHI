@@ -3,12 +3,18 @@
 // merujuk ke auth.users(id). RLS tetap dikelola di sisi Supabase (lihat sql/).
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  // native  = engine untuk dev lokal (Windows/macOS)
+  // rhel-openssl-3.0.x = engine untuk runtime serverless Vercel (Node 20, AL2023)
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  // url = Transaction Pooler (port 6543) untuk runtime serverless
+  url       = env("DATABASE_URL")
+  // directUrl = Session Pooler / direct (port 5432) khusus untuk `prisma migrate`
+  directUrl = env("DIRECT_URL")
 }
 
 enum UserRole {
