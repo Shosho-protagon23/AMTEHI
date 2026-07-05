@@ -14,6 +14,12 @@ import routes from './routes/index.js';
 export function createApp() {
   const app = express();
 
+  // Trust proxy Vercel (1 hop) — request tiba lewat proxy sehingga header
+  // X-Forwarded-For selalu ada. Tanpa ini, express-rate-limit menolak menebak
+  // IP klien (ERR_ERL_UNEXPECTED_X_FORWARDED_FOR). Nilai 1 lebih aman daripada
+  // `true` karena tidak mempercayai seluruh rantai proxy secara membabi buta.
+  app.set('trust proxy', 1);
+
   // Security headers
   app.use(helmet());
 
